@@ -4,71 +4,75 @@ from app.integrations.openai.service import OpenAIService
 from app.integrations.google_calendar.service import GoogleCalendarService
 from app.integrations.airtable.service import AirtableService
 from datetime import datetime, timedelta
+from app.core.assistant import StorageAssistant
 
 openai_service = OpenAIService()
 calendar_service = GoogleCalendarService()
 airtable_service = AirtableService()
+
+# Initialize the storage assistant
+storage_assistant = StorageAssistant()
 
 @bp.route('/')
 def index():
     """Render the main page"""
     return render_template('index.html')
 
+@bp.route('/chat-interface')
+def chat_interface():
+    """Render the chat interface."""
+    return render_template('chat.html')
+
 @bp.route('/chat', methods=['POST'])
 def chat():
-    """Handle chat requests"""
+    """Handle chat messages."""
     try:
-        data = request.json
+        data = request.get_json()
         if not data or 'message' not in data:
             return jsonify({'error': 'No message provided'}), 400
             
-        # Use OpenAI to generate response
-        print(f"📤 Sending request to OpenAI API...")
-        print(f"User message: {data['message']}")
+        message = data['message']
+        print(f"\n📩 Received message: {message}")
         
-        response = openai_service.get_chat_response(data['message'])
+        # Get response from storage assistant
+        response = storage_assistant.get_response(message)
+        print(f"📤 Assistant response: {response}")
         
-        print(f"✅ Received response from OpenAI API")
-        print(f"🤖 Assistant response: {response}")
+        return jsonify({'response': response})
         
-        return jsonify({
-            'response': response,
-            'status': 'success'
-        })
     except Exception as e:
         print(f"❌ Error in chat endpoint: {str(e)}")
         return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 400
+            'error': 'An error occurred processing your request'
+        }), 500
 
 @bp.route('/booking/available-slots', methods=['GET'])
 def get_available_slots():
     """Get available booking slots"""
     try:
-        start_date = request.args.get('start_date')
-        if not start_date:
+        date_str = request.args.get('date')
+        if not date_str:
             return jsonify({
                 'status': 'error',
-                'message': 'Start date is required'
+                'message': 'Date is required'
             }), 400
 
-        # Generate time slots for the selected date
-        # Fixed time slots from 9 AM to 5 PM
+        # Generate fixed time slots for the selected date
         time_slots = [
-            f"{start_date}T09:00:00",
-            f"{start_date}T10:00:00",
-            f"{start_date}T11:00:00",
-            f"{start_date}T13:00:00",  # After lunch break
-            f"{start_date}T14:00:00",
-            f"{start_date}T15:00:00",
-            f"{start_date}T16:00:00"
+            f"{date_str}T09:00:00",  # 9 AM
+            f"{date_str}T10:00:00",  # 10 AM
+            f"{date_str}T11:00:00",  # 11 AM
+            f"{date_str}T13:00:00",  # 1 PM (after lunch)
+            f"{date_str}T14:00:00",  # 2 PM
+            f"{date_str}T15:00:00",  # 3 PM
+            f"{date_str}T16:00:00"   # 4 PM
         ]
         
         return jsonify({
             'status': 'success',
             'slots': time_slots
         })
+            
     except Exception as e:
         print(f"Error getting time slots: {str(e)}")
         return jsonify({

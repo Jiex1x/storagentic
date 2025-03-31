@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Assistant - Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .main-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            min-width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .chat-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #ffffff;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 0.5rem 0;
+        }
+
+        .quick-action-btn {
+            padding: 0.5rem 1rem;
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .quick-action-btn:hover {
+            background: #dee2e6;
+        }
+
+        .faq-section {
+            margin-bottom: 2rem;
+            flex-shrink: 0;
+        }
+
+        .faq-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid #dee2e6;
+            width: 100%;
+        }
+
+        .faq-item:hover {
+            background: #e9ecef;
+        }
+
+        .location-section {
+            margin-bottom: 2rem;
+            flex-shrink: 0;
+        }
+
+        .contact-info {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        .contact-info p {
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .human-support {
+            margin-top: auto;
+            padding: 1rem;
+            background: #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .message {
+            margin-bottom: 0.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.assistant {
+            align-items: flex-start;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 15px;
+            position: relative;
+            white-space: pre-line;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .message.user .message-content {
+            background: #007bff;
+            color: white;
+            border-radius: 15px 15px 0 15px;
+        }
+
+        .message.assistant .message-content {
+            background: #f1f3f5;
+            color: #212529;
+            border-radius: 15px 15px 15px 0;
+        }
+
+        .chat-input {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            padding: 0.5rem 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .chat-input button {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 20px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .chat-input button:hover {
+            background: #0056b3;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 0.5rem;
+            color: #6c757d;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .support-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        /* 添加预约表单模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+        }
+
+        .booking-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 添加预约表单模态框 -->
+    <div class="modal" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Book Collection Service</h5>
+                <button class="close-button" onclick="closeBookingModal()">&times;</button>
+            </div>
+            <form id="bookingForm" onsubmit="submitBooking(event)">
+                <div class="form-group">
+                    <label for="bookingDate">Select Date</label>
+                    <input type="date" id="bookingDate" required>
+                    <small class="text-muted">Please select a date within the next 14 days</small>
+                </div>
+                <div class="form-group">
+                    <label for="timeSlot">Available Time Slots</label>
+                    <select id="timeSlot" required>
+                        <option value="">Select a time slot</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact">Contact Information</label>
+                    <input type="text" id="contact" placeholder="Phone number or email address" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Collection Address</label>
+                    <textarea id="address" required></textarea>
+                </div>
+                <div class="booking-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Book Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <h5 class="mb-3">Quick Access</h5>
+                
+                <!-- FAQ Section -->
+                <div class="faq-section">
+                    <h6 class="mb-3">Common Questions</h6>
+                    <div class="faq-item" onclick="sendQuickQuestion('What storage sizes are available?')">
+                        📦 Available Storage Sizes
+                    </div>
+                    <div class="faq-item" onclick="sendQuickQuestion('How much does storage cost?')">
+                        💰 Storage Pricing
+                    </div>
+                    <div class="faq-item" onclick="sendQuickQuestion('How do I book a storage unit?')">
+                        📅 Booking Process
+                    </div>
+                    <div class="faq-item" onclick="sendQuickQuestion('What are your security features?')">
+                        🔒 Security Features
+                    </div>
+                </div>
+
+                <!-- Location Section -->
+                <div class="location-section">
+                    <h6 class="mb-3">Contact & Location</h6>
+                    <div class="contact-info">
+                        <p><i class="fas fa-map-marker-alt"></i>&nbsp; 123 Storage Street</p>
+                        <p><i class="fas fa-phone"></i>&nbsp; (555) 123-4567</p>
+                        <p><i class="fas fa-envelope"></i>&nbsp; info@storage.com</p>
+                    </div>
+                </div>
+
+                <!-- Human Support Section -->
+                <div class="human-support">
+                    <h6 class="mb-2">Need Human Assistance?</h6>
+                    <p class="small mb-3">Our support team is here to help!</p>
+                    <button class="btn btn-primary w-100" onclick="requestHumanSupport()">
+                        <i class="fas fa-headset"></i> Talk to Human
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <div>
+                    <h4 class="mb-0">Storage Assistant</h4>
+                    <small class="text-muted">Ask me anything about our storage services</small>
+                </div>
+                <span class="support-badge">
+                    <i class="fas fa-circle"></i> Online
+                </span>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Welcome message -->
+                <div class="message assistant">
+                    <div class="message-content">👋 Hello! I'm your storage assistant. How can I help you today?</div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="sendQuickQuestion('I need storage space')">
+                        🔍 Find Storage
+                    </button>
+                    <button class="quick-action-btn" onclick="sendQuickQuestion('I want to make a booking')">
+                        📅 Book Now
+                    </button>
+                    <button class="quick-action-btn" onclick="sendQuickQuestion('What are your prices?')">
+                        💰 Pricing
+                    </button>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typing-indicator">
+                <i class="fas fa-ellipsis-h"></i> Assistant is typing...
+            </div>
+            
+            <div class="chat-input">
+                <input type="text" 
+                       id="user-input" 
+                       placeholder="Type your message here..."
+                       autocomplete="off">
+                <button onclick="sendMessage()" id="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 处理回车键发送消息
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function addMessage(type, content) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            // 改进的格式化逻辑
+            let formattedContent = content.trim();
+            
+            // 检查是否包含数字编号的列表
+            if (content.match(/\d+\.\s+/)) {
+                formattedContent = content
+                    .replace(/\d+\.\s+/g, '\n$&')  // 在数字编号前添加换行
+                    .replace(/^\n/, '')            // 移除开头的换行
+                    .replace(/\n\n+/g, '\n')       // 将多个换行替换为单个换行
+                    .replace(/\*\*/g, '')          // 移除markdown加粗标记
+                    .trim();
+            } else {
+                // 对于非列表内容，确保没有多余的换行
+                formattedContent = formattedContent.replace(/\n\s*\n/g, '\n').trim();
+            }
+            
+            messageDiv.innerHTML = `<div class="message-content">${formattedContent}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typing-indicator').classList.add('active');
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typing-indicator').classList.remove('active');
+        }
+
+        function sendQuickQuestion(question) {
+            if (question === 'I want to make a booking') {
+                openBookingModal();
+            } else {
+                document.getElementById('user-input').value = question;
+                sendMessage();
+            }
+        }
+
+        function requestHumanSupport() {
+            // Add user message first
+            addMessage('user', 'I would like to speak with a human agent, please.');
+            // Then show assistant response
+            addMessage('assistant', `
+                I'll connect you with a human support agent right away. 
+                Please provide your contact information and a brief description of your inquiry.
+            `);
+            // 这里可以添加转人工的逻辑
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            const sendButton = document.getElementById('send-button');
+            
+            if (!message) return;
+            
+            // 禁用输入和发送按钮
+            input.disabled = true;
+            sendButton.disabled = true;
+            
+            // 添加用户消息
+            addMessage('user', message);
+            input.value = '';
+            
+            // 显示输入指示器
+            showTypingIndicator();
+            
+            try {
+                // 发送到后端
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+                
+                const data = await response.json();
+                
+                // 隐藏输入指示器
+                hideTypingIndicator();
+                
+                // 添加助手回复
+                addMessage('assistant', data.response);
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('assistant', 'Sorry, something went wrong. Please try again.');
+            } finally {
+                // 重新启用输入和发送按钮
+                input.disabled = false;
+                sendButton.disabled = false;
+                input.focus();
+            }
+        }
+
+        // 添加预约表单相关函数
+        function openBookingModal() {
+            // 添加用户消息
+            addMessage('user', 'I want to schedule a collection booking');
+            
+            const modal = document.getElementById('bookingModal');
+            modal.classList.add('show');
+            
+            // 设置日期选择器的最小值为今天，最大值为14天后
+            const today = new Date();
+            const maxDate = new Date();
+            maxDate.setDate(today.getDate() + 14);
+            
+            const dateInput = document.getElementById('bookingDate');
+            dateInput.min = today.toISOString().split('T')[0];
+            dateInput.max = maxDate.toISOString().split('T')[0];
+            
+            // 监听日期变化，获取可用时间段
+            dateInput.addEventListener('change', fetchAvailableTimeSlots);
+            
+            // 添加助手回复
+            addMessage('assistant', 'I can help you schedule a collection booking. Please fill in the booking form with your preferred date, time, and contact details.');
+        }
+
+        function closeBookingModal() {
+            const modal = document.getElementById('bookingModal');
+            modal.classList.remove('show');
+        }
+
+        async function fetchAvailableTimeSlots() {
+            const date = document.getElementById('bookingDate').value;
+            const timeSlotSelect = document.getElementById('timeSlot');
+            
+            try {
+                const response = await fetch(`/booking/available-slots?date=${date}`);
+                const data = await response.json();
+                
+                // 清空现有选项
+                timeSlotSelect.innerHTML = '<option value="">Select a time slot</option>';
+                
+                if (data.status === 'success' && data.slots.length > 0) {
+                    // 添加可用时间段
+                    data.slots.forEach(slot => {
+                        const time = new Date(slot);
+                        const option = document.createElement('option');
+                        option.value = slot;
+                        option.textContent = time.toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                        });
+                        timeSlotSelect.appendChild(option);
+                    });
+                } else {
+                    timeSlotSelect.innerHTML += '<option value="" disabled>No available slots for this date</option>';
+                }
+            } catch (error) {
+                console.error('Error fetching time slots:', error);
+                timeSlotSelect.innerHTML = '<option value="">Error loading time slots</option>';
+            }
+        }
+
+        async function submitBooking(event) {
+            event.preventDefault();
+            
+            const timeSlot = document.getElementById('timeSlot').value;
+            const bookingData = {
+                start_time: timeSlot,  // 使用 start_time 而不是 time_slot
+                name: document.getElementById('fullName').value,  // 使用 name 而不是 full_name
+                contact: document.getElementById('contact').value,
+                address: document.getElementById('address').value
+            };
+            
+            try {
+                const response = await fetch('/booking/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    addMessage('assistant', 'Your booking has been confirmed! The details have been added to your Google Calendar.');
+                    closeBookingModal();
+                } else {
+                    alert('Failed to create booking: ' + (result.error || result.message));
+                }
+            } catch (error) {
+                console.error('Error submitting booking:', error);
+                alert('An error occurred while submitting your booking. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html> 
