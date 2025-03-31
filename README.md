@@ -25,6 +25,7 @@ The following environment variables are required:
 FLASK_APP=app
 FLASK_ENV=development
 FLASK_DEBUG=1
+GOOGLE_CALENDAR_ID=primary
 AIRTABLE_API_KEY=your_airtable_api_key
 AIRTABLE_BASE_ID=your_airtable_base_id
 ```

@@ -15,12 +15,12 @@ storage_assistant = StorageAssistant()
 
 @bp.route('/')
 def index():
-    """Render the main page"""
-    return render_template('index.html')
+    """Render the chat interface"""
+    return render_template('chat.html')
 
 @bp.route('/chat-interface')
 def chat_interface():
-    """Render the chat interface."""
+    """Render the chat interface (keeping for backward compatibility)"""
     return render_template('chat.html')
 
 @bp.route('/chat', methods=['POST'])
